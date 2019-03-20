@@ -17,6 +17,7 @@
 package io.helidon.examples.quickstart.se;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Optional;
 import java.util.logging.LogManager;
 
@@ -24,17 +25,23 @@ import io.helidon.common.http.Http;
 import io.helidon.config.Config;
 import io.helidon.metrics.MetricsSupport;
 import io.helidon.security.Security;
-import io.helidon.security.webserver.WebSecurity;
-import io.helidon.security.google.GoogleTokenProvider;
+import io.helidon.security.integration.webserver.WebSecurity;
+import io.helidon.security.providers.google.login.GoogleTokenProvider;
 import io.helidon.webserver.Routing;
 import io.helidon.webserver.ServerConfiguration;
 import io.helidon.webserver.StaticContentSupport;
 import io.helidon.webserver.WebServer;
 import io.helidon.webserver.json.JsonSupport;
-import io.helidon.webserver.zipkin.ZipkinTracerBuilder;
+import io.helidon.tracing.zipkin.ZipkinTracerBuilder;
 
 import io.opentracing.Tracer;
 import io.opentracing.util.GlobalTracer;
+
+/* health check imports */
+import io.helidon.health.HealthSupport;
+import io.helidon.health.checks.HealthChecks;
+import org.eclipse.microprofile.health.HealthCheck;
+import org.eclipse.microprofile.health.HealthCheckResponse;
 
 /**
  * Simple Hello World rest application.
@@ -53,21 +60,23 @@ import io.opentracing.util.GlobalTracer;
  *  Logging
  */
 public final class Main {
+    
 
     /**
      * Cannot be instantiated.
      */
     private Main() { }
-
+    
     /**
      * Creates new {@link Routing}.
      *
      * @return the new instance
      */
-    private static Routing createRouting(WebSecurity webSecurity) {
+    private static Routing createRouting(HealthSupport healthSupport, WebSecurity webSecurity) {
         return Routing.builder()
-                .register(webSecurity)
-                .register(JsonSupport.get())
+               // .register(webSecurity)
+                .register(healthSupport)
+                .register(JsonSupport.create())
                 .register(MetricsSupport.create())
                 .get("/health", (req, res) -> {
                     res.status(Http.Status.OK_200);
@@ -91,12 +100,12 @@ public final class Main {
      */
     private static Tracer createTracer(final Config config) {
         Optional<String> zipkinEndpoint = config.get("services.zipkin.endpoint")
-                .asOptionalString();
+                .asString().asOptional();
 
         if (zipkinEndpoint.isPresent()) {
             System.out.println("Sending trace data to " + zipkinEndpoint.get());
             Tracer tracer = ZipkinTracerBuilder.forService("greet-service")
-                    .zipkin(zipkinEndpoint.get())
+                    .collectorUri(URI.create(zipkinEndpoint.get()))
                     .build();
             GlobalTracer.register(tracer);
         } else {
@@ -114,9 +123,9 @@ public final class Main {
     private static WebSecurity createWebSecurity(final Config config) {
         Security security = Security.builder()
             .addProvider(GoogleTokenProvider.builder()
-                .clientId(config.get("security.properties.google-client-id").asString()))
+                .clientId(config.get("security.properties.google-client-id").asString().get()))
             .build();
-        return WebSecurity.from(security);
+        return WebSecurity.create(security);
     }
 
     /**
@@ -151,7 +160,15 @@ public final class Main {
 
         final WebSecurity webSecurity = createWebSecurity(config);
 
-        final Routing routing = createRouting(webSecurity);
+        HealthSupport health = HealthSupport.builder()
+        .add(HealthChecks.healthChecks())
+        .add((HealthCheck) () -> HealthCheckResponse.named("exampleHealthCheck")
+                .up()
+                .withData("time", System.currentTimeMillis())
+                .build())
+        .build();
+
+        final Routing routing = createRouting(health, webSecurity);
 
         final WebServer server = WebServer.create(serverConfig, routing);
 

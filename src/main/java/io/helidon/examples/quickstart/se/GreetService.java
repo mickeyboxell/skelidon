@@ -22,7 +22,7 @@ import javax.json.JsonObject;
 import io.helidon.common.http.Http;
 import io.helidon.config.Config;
 import io.helidon.metrics.RegistryFactory;
-import io.helidon.security.webserver.WebSecurity;
+import io.helidon.security.integration.webserver.WebSecurity;
 import io.helidon.webserver.Routing;
 import io.helidon.webserver.ServerRequest;
 import io.helidon.webserver.ServerResponse;
@@ -64,7 +64,7 @@ public class GreetService implements Service {
     /**
      * The config value for the key {@code greeting}.
      */
-    private static volatile String greeting = CONFIG.get("greeting").asString("Ciao");
+    private static volatile String greeting = CONFIG.get("greeting").asString().orElse("Ciao");
 
     /**
      * Create metric registry.
@@ -88,7 +88,7 @@ public class GreetService implements Service {
             .get("/", this::getDefaultMessageHandler)
             .get("/greeting", this::getGreetingHandler)
             .get("/{name}", this::getMessageHandler)
-            .put("/greeting/{greeting}", WebSecurity.authenticate(), this::updateGreetingHandler)
+            .put("/greeting/{greeting}", /* WebSecurity.authenticate(),*/ this::updateGreetingHandler)
             .post("/greeting", this::updateGreetingJsonHandler)
             .post("/slowgreeting", this::updateGreetingJsonSlowlyHandler);
     }
