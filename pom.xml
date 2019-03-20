@@ -26,7 +26,7 @@
     <name>${project.artifactId}</name>
 
     <properties>
-        <helidon.version>0.11.0</helidon.version>
+        <helidon.version>1.0.1</helidon.version>
         <!-- Default package. Will be overriden by Maven archetype -->
         <package>io.helidon.examples.quickstart.se</package>
         <mainClass>io.helidon.examples.quickstart.se.Main</mainClass>
@@ -177,7 +177,7 @@
         <dependency>
             <groupId>io.helidon.health</groupId>
             <artifactId>helidon-health-checks</artifactId>
-        </dependency>   
+        </dependency>
         <dependency>
             <groupId>io.helidon.bundles</groupId>
             <artifactId>helidon-bundles-webserver</artifactId>
@@ -201,6 +201,10 @@
         <dependency>
             <groupId>io.helidon.security.providers</groupId>
             <artifactId>helidon-security-providers-google-login</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.helidon.media.jsonp</groupId>
+            <artifactId>helidon-media-jsonp-server</artifactId>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
