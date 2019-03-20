@@ -17,8 +17,6 @@
 package io.helidon.examples.quickstart.se;
 
 import java.io.IOException;
-import java.net.URI;
-import java.util.Optional;
 import java.util.logging.LogManager;
 
 import io.helidon.common.http.Http;
@@ -31,11 +29,10 @@ import io.helidon.webserver.Routing;
 import io.helidon.webserver.ServerConfiguration;
 import io.helidon.webserver.StaticContentSupport;
 import io.helidon.webserver.WebServer;
-import io.helidon.webserver.json.JsonSupport;
-import io.helidon.tracing.zipkin.ZipkinTracerBuilder;
-
+import io.helidon.media.jsonp.server.JsonSupport;
+import io.helidon.tracing.TracerBuilder;
 import io.opentracing.Tracer;
-import io.opentracing.util.GlobalTracer;
+import io.opentracing.noop.NoopTracer;
 
 /* health check imports */
 import io.helidon.health.HealthSupport;
@@ -99,20 +96,16 @@ public final class Main {
      * @return the created {@code Tracer}
      */
     private static Tracer createTracer(final Config config) {
-        Optional<String> zipkinEndpoint = config.get("services.zipkin.endpoint")
-                .asString().asOptional();
+        Tracer tracer = TracerBuilder.create(config.get("services.tracing"))
+                .buildAndRegister();
 
-        if (zipkinEndpoint.isPresent()) {
-            System.out.println("Sending trace data to " + zipkinEndpoint.get());
-            Tracer tracer = ZipkinTracerBuilder.forService("greet-service")
-                    .collectorUri(URI.create(zipkinEndpoint.get()))
-                    .build();
-            GlobalTracer.register(tracer);
+        if (tracer instanceof NoopTracer) {
+            System.out.println("Tracer libraries are not available, not tracing");
         } else {
-            System.out.println("services.zipkin.uri not defined. Sending no trace data");
+            System.out.println("Tracing using " + tracer.getClass().getName() + " tracer");
         }
 
-        return GlobalTracer.get();
+        return tracer;
     }
 
     /**

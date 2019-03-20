@@ -18,11 +18,14 @@ app:
   greeting: "Hello"
 
 services:
-#  Use this hostname if running in Kubernetes
-#  zipkin.endpoint: "http://zipkin:9411"
-  zipkin.endpoint: "zipkin.istio-system:9411"
+  tracing:
+    service: greet-service
 #  Use this hostname if running in a docker container
-#  zipkin.endpoint: "http://docker.for.mac.localhost:9411"
+    host: localhost
+#  Use this hostname if running in Kubernetes
+#    host: zipkin.istio-system
+#    host: zipkin
+    port: 9411
 
 #Define a health check socket
 server:
