@@ -18,14 +18,14 @@ FROM maven:3.5.2-jdk-8-alpine AS MAVEN_TOOL_CHAIN
 #RUN mkdir /myvolume
 #VOLUME /myvolume 
 #Copies in the pom.xml from your current working directory on my laptop and copy it into the /tmp folder in the container
-COPY pom.xml /tmp/ 
+COPY pom.xml /tmp/
 #Creates a metadata layer - effectively cd'ing in the container - this creates a new container/build layer
 WORKDIR /tmp/
 #Makes sure that the pom.xml is up to date
-RUN mvn -B dependency:resolve-plugins dependency:resolve
+RUN mvn package -Dmaven.repo.local=/tmp/repository
 #COPY /Users/mboxell/Desktop/Skelidon/src /tmp/src/ - doesn't seem to be copying in /src 
 COPY /src /tmp/src/
-RUN mvn package 
+RUN mvn package -Dmaven.repo.local=/tmp/repository
 #-Dmaven.repo.local=/myvolume
 
 #Staged builds allow you to minimize your image 
