@@ -26,3 +26,11 @@ hs_err_pid*
 *.iml
 .DS_Store
 target/
+
+.classpath
+.dockerignore
+.draft-tasks.toml
+.draftignore
+.project
+.settings/
+.vscode/
